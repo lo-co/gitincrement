@@ -1,0 +1,58 @@
+bin/bash
+
+# Simple script to handle semver version incrementing
+wversion=$1
+commit_message=$2
+
+vmajor=0
+vminor=0
+vpatch=0
+
+if [ "$#" -ne 2 ]; then
+        echo "Illegal number of arguments"
+        exit -1
+fi
+
+if [ -d .git ]; then
+        current_version=`git describe --long`
+        echo "Current version is ${current_version}"
+
+        IFS='.'
+        read -a strarr <<< "$current_version"
+        vmajor="${strarr[0]}"
+        vmajor="${vmajor:1}"
+        vminor="${strarr[1]}"
+        vpatch="${strarr[2]}"
+
+        IFS='-'
+        read -a strarr <<< "$vpatch"
+
+        vpatch="${strarr[0]}"
+
+else
+        echo "Not a git repository"
+        exit -1
+fi
+
+
+case $wversion in
+        -ma|--major)
+                ((vmajor++))
+                echo "Incrementing major version ${vmajor}"
+                ;;
+        -mi|--minor)
+                ((vminor++))
+                ;;
+        -p|--patch)
+                ((vpatch++))
+                ;;
+        *)
+                echo "Incorrect request"
+                ;;
+
+esac
+new_version="v${vmajor}.${vminor}.${vpatch}"
+
+git tag -a ${new_version} -m ${commit_message}
+git push --tags
+
